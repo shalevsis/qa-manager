@@ -1,0 +1,9 @@
+{
+  "name": "qa-agent",
+  "description": "Full QA pipeline \u2014 writes tests, runs them, analyzes failures, and produces a QA report. Supports Jest/Vitest, Pytest, Playwright/Cypress, UI interaction testing, speech/voice testing, and continuous API testing.",
+  "version": "1.0.0",
+  "author": {
+    "name": "User",
+    "email": ""
+  }
+}

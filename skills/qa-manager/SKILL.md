@@ -105,9 +105,43 @@ python3 ~/Claude/qa-manager/skills/qa-manager/scripts/log_qa_run.py start --proj
 
 ## Phase 1: Environment detection + Suite selection
 
-### Step A — Detect test environment capabilities
+### Step A — Detect project archetype + test environment capabilities
 
-Before matching suites, know what the test environment can actually exercise:
+**Archetype detection — run first:**
+
+```bash
+# JS/TS project signals
+cat package.json 2>/dev/null | grep -E '"next"|"react"|"vue"|"svelte"|"angular"|"express"|"fastify"|"hapi"|"electron"' | head -10
+cat package.json 2>/dev/null | grep -E '"workspaces"|"bin"' | head -5
+
+# Python project signals
+cat pyproject.toml setup.cfg requirements*.txt 2>/dev/null | grep -E "fastapi|flask|django|click|typer|celery" | head -5
+
+# Monorepo signals
+find . -maxdepth 3 -name "package.json" -not -path "*/node_modules/*" 2>/dev/null | wc -l
+```
+
+Classify into one archetype — use it to bias suite selection below:
+
+| Archetype | Detected by | De-prioritize | Prioritize |
+|---|---|---|---|
+| **React SPA** | `react` + `vite`/`webpack`, no `next` | canvas, speech (unless signals), SSR | ui-interaction, routing, forms, localStorage, accessibility |
+| **Next.js** | `next` in deps | canvas, camera | routing, SSR/hydration, API routes, auth, accessibility |
+| **Vue/Svelte SPA** | `vue`/`svelte` | camera, speech | ui-interaction, routing, forms, accessibility |
+| **Node API** | `express`/`fastify`/`hapi`, no frontend | UI suites, canvas, speech | rest-api, auth-session, db-query-safety, error-handling, network-conditions |
+| **Python API** | `fastapi`/`flask`/`django` | all JS-specific suites | rest-api, auth-session, db-query-safety, error-handling |
+| **Python CLI/script** | Python, no web framework | UI, network, auth suites | core-unit, error-handling, file-handling, data-integrity |
+| **Node CLI** | `bin` in package.json | UI, DOM, browser suites | core-unit, error-handling, file-handling |
+| **Electron** | `electron` in deps | server-side suites | ui-interaction, offline-pwa, file-handling, permissions |
+| **Monorepo** | 3+ `package.json` files | — | detect per-workspace, apply archetype per workspace |
+| **Full-stack** | frontend + backend in same repo | — | apply both SPA and API archetypes |
+
+Announce archetype before proceeding:
+> "Archetype: {archetype} — suite selection biased accordingly."
+
+---
+
+**Test environment capabilities:**
 
 ```bash
 # Test runner
@@ -151,7 +185,35 @@ Existing coverage:
 Tests before this run: N (across X files)
 ```
 
-### Step C — Match and annotate suites with confidence tiers
+### Step C — Always-on security baseline scan
+
+**This runs on every project, unconditionally, regardless of suite selection.**
+
+```bash
+# Hardcoded secrets / credentials
+grep -rn --include="*.js" --include="*.ts" --include="*.jsx" --include="*.tsx" \
+  --include="*.py" --include="*.env*" --include="*.json" --include="*.yaml" --include="*.yml" \
+  -E "(api_key|apikey|api_secret|secret_key|password|passwd|token|bearer|private_key|access_key)\s*[=:]\s*['\"][^'\"]{6,}" \
+  --exclude-dir=node_modules --exclude-dir=.git \
+  . 2>/dev/null | grep -iv "process\.env\|os\.environ\|config\[" | head -20
+
+# AWS / common credential patterns
+grep -rn --include="*.js" --include="*.ts" --include="*.py" --include="*.yaml" --include="*.yml" \
+  -E "(AKIA[0-9A-Z]{16}|ghp_[a-zA-Z0-9]{36}|sk-[a-zA-Z0-9]{32,})" \
+  --exclude-dir=node_modules --exclude-dir=.git \
+  . 2>/dev/null | head -10
+
+# .env files committed to repo
+git ls-files | grep -E "^\.env$|^\.env\." 2>/dev/null
+
+# Private keys in repo
+git ls-files | grep -E "\.(pem|key|p12|pfx)$" 2>/dev/null
+```
+
+Any hit → immediately flag in Phase 6 Security section with `file:line`. Do not wait for the full report.
+These findings are **always HIGH severity** regardless of project type.
+
+### Step D — Match and annotate suites with confidence tiers
 
 Read `references/suite-index.md`. Scan the project. Match all applicable suites. Then annotate each with a confidence tier — tiers affect **order and reporting only**, NOT whether tests get written. All matched suites get tests.
 
@@ -176,8 +238,38 @@ Load only suites relevant to the changed files. Announce: "Scoped to N changed f
 
 > ⛔ **CONSTRAINT 1 IN EFFECT:** Read source files only. Do not plan, suggest, comment, or stage any edits. If you notice something wrong in the code, note it mentally — report it later in the backlog. Do not act on it here.
 
-1. Read the files to be tested — understand inputs, outputs, side effects, and control flow
-2. Read all existing test files — follow their style, don't duplicate what's already covered
+**Read priority order** (don't read everything — read what matters most first):
+1. Files with the most complex logic (most branches, most function calls)
+2. Integration seams (files that connect subsystems)
+3. Error handling paths
+4. Utilities used by many other files
+5. Trivial getters/constants last (or skip)
+
+**For each source file read:** note inputs, outputs, side effects, control flow, and failure modes.
+
+**Read all existing test files** — follow their style, don't duplicate covered ground.
+
+**Test debt scan — run on every existing test file:**
+
+```bash
+# Tests with no assertions (always pass, test nothing)
+grep -n "it(\|test(" {test_file} | grep -v "expect\|assert\|should" 2>/dev/null
+
+# Assertion-free test blocks
+grep -rn --include="*.test.*" --include="*.spec.*" \
+  -A5 "it(\|test(" . 2>/dev/null | grep -B5 "^--$" | grep "it(\|test(" | head -20
+```
+
+For each test file, flag:
+- **No-assertion tests** — test block with no `expect`/`assert` → always passes, tests nothing
+- **Trivial pass tests** — `expect(true).toBe(true)`, `expect(1).toBe(1)` → noise
+- **Dead tests** — tests referencing functions/components that no longer exist in source
+- **Impossible-to-fail tests** — assertions that are true regardless of logic (e.g., asserting `typeof x === 'string'` on a hardcoded string literal)
+
+Report debt findings as:
+> "Test debt found in {file}: {N} no-assertion tests, {N} dead tests — these inflate test count without catching bugs."
+
+Add to QA-BACKLOG.md under a `### Test Debt` section (Phase 7).
 
 ---
 
@@ -241,6 +333,17 @@ Short version for quick classification:
 5. Fails consistently with nonsensical value → likely production bug. Document and stop.
 
 Fix test file issues (they're yours to own). Never touch production code.
+
+**Proactive wisdom flagging:**
+After classifying each failure, ask: does this pattern match an entry in `references/wisdom/failure-playbook.md`?
+
+- **Yes** → proceed normally
+- **No** → tag it internally as `[WISDOM-CANDIDATE]` with a one-line description of the new pattern
+
+At Phase 8, you will propose adding all `[WISDOM-CANDIDATE]` items to the playbook — don't wait to be asked. Surface them proactively:
+> "I encountered {N} failure pattern(s) not in the playbook: {brief description}. Should I add them?"
+
+Same applies during Phase 3: if you avoid a mistake because of `anti-patterns.md`, but notice a related anti-pattern not yet documented — tag it `[WISDOM-CANDIDATE]` for Phase 8.
 
 ---
 

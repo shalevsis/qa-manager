@@ -53,35 +53,47 @@ This commitment is binding for the duration of the run. If at any point you feel
 
 ## Phase 0: Project memory scan + Cross-run regression check
 
-### Step A — Read project memory
+### Step A — Read project memory + discover QA context
 
-Before touching any code, scan for prior QA context left by previous agents:
+Before touching any code, do a 3-step discovery scan. Do not assume fixed filenames — every project's QA agent may have stored context differently.
 
+**Step 1 — Read CLAUDE.md first (always)**
 ```bash
-# Claude memory for this project
-PROJECT_SLUG=$(pwd | sed 's|/|-|g' | sed 's|^-||')
-ls ~/.claude/projects/-${PROJECT_SLUG}/memory/ 2>/dev/null
-
-# Project-level CLAUDE.md (often contains QA notes, known issues, recent fixes)
-cat CLAUDE.md 2>/dev/null | head -80
-
-# Any existing QA backlog
-cat QA-BACKLOG.md 2>/dev/null
+cat CLAUDE.md 2>/dev/null
 ```
+Scan it for: mentions of QA agents, backlog file references, known bugs, recent fixes, test notes, or any files named explicitly. Extract every file path referenced. These are your leads for Step 2.
 
-Read the memory files if they exist:
+**Step 2 — Dynamic QA file discovery**
 ```bash
+# Find QA/backlog/findings/issues files anywhere in the project
+find . -maxdepth 3 \
+  -not -path "*/node_modules/*" \
+  -not -path "*/.git/*" \
+  -not -path "*/dist/*" \
+  -not -path "*/build/*" \
+  \( \
+    \( -iname "*qa*" -o -iname "*backlog*" -o -iname "*findings*" \
+       -o -iname "*issues*" -o -iname "*bugs*" -o -iname "*fixme*" \
+       -o -iname "*known*" -o -iname "*todo*" \) \
+    -a \( -name "*.md" -o -name "*.txt" \) \
+  \) 2>/dev/null
+```
+Also read any files referenced by name in CLAUDE.md from Step 1.
+
+**Step 3 — Read Claude project memory**
+```bash
+PROJECT_SLUG=$(pwd | sed 's|/|-|g' | sed 's|^-||')
 cat ~/.claude/projects/-${PROJECT_SLUG}/memory/*.md 2>/dev/null
 ```
 
-Extract and internalize:
-- **Fixes already made** by a prior QA agent → don't re-report these as new findings
-- **Known issues** that were documented but not yet fixed → note in your report as "previously identified"
-- **Test patterns** that worked or failed in this project → apply to Phase 3
-- **Anti-patterns specific to this codebase** → avoid repeating mistakes the project already learned
+Read all discovered files. Internalize:
+- **Fixes already made** by prior QA agent → don't re-report as new findings
+- **Known open issues** → label "previously identified" in your report
+- **Test patterns that failed** in this project → avoid repeating in Phase 3
+- **Project-specific anti-patterns** → treat as additions to `references/wisdom/anti-patterns.md` for this run
 
 Print a brief context summary before proceeding:
-> "Project memory: {found N memory files | no memory found}. Prior QA: {summary of fixes made / issues known | none}."
+> "Prior QA context: {N files found: list them | none found}. Known fixes: {summary | none}. Known open issues: {summary | none}."
 
 ### Step B — Cross-run regression check
 

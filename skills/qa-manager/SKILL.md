@@ -163,6 +163,8 @@ Think like someone trying to *break* the code, not prove it works.
 
 Follow the patterns in your loaded suite files. Keep tests generic and behavior-focused.
 
+**Before writing — read `references/wisdom/anti-patterns.md`.** It contains cross-project mistakes that will make your tests wrong or flaky before they run. Check your approach against it.
+
 **Test naming:** describe the behavior, not the implementation.
 - Good: `"returns null when user is not found"`
 - Bad: `"test getUserById null case"`
@@ -197,14 +199,14 @@ Use the project's existing `test` script if one exists. Capture full stdout + st
 
 **If all pass:** note significant coverage gaps in critical paths only.
 
-**If failures — classify before acting:**
+**If failures — use `references/wisdom/failure-playbook.md`.** It contains a full classification checklist with diagnosis steps for every common failure pattern. Read it before touching anything.
 
-Check in this order:
-1. `TypeError / "is not a function"` → wrong API shape in test. Read the source function signature first.
-2. `"expected X, received undefined"` → test accessing a property that doesn't exist on the return value. Read the source return shape.
-3. Assertion value mismatch (expected 3, got 1) → compare test assumption vs actual source logic. Could be either.
-4. Passes sometimes, fails sometimes → flaky/statistical. Widen threshold or add retry (see `statistical-distribution.md`).
-5. Fails consistently with a value that makes no logical sense → likely a real production bug. Document and stop.
+Short version for quick classification:
+1. `TypeError / "is not a function"` → API shape mismatch in test. Read source signature.
+2. `"expected X, received undefined"` → wrong property access. Read source return shape.
+3. Value mismatch (expected 3, got 1) → compare test assumption vs actual logic.
+4. Passes sometimes, fails sometimes → flaky. See playbook for type-specific fixes.
+5. Fails consistently with nonsensical value → likely production bug. Document and stop.
 
 Fix test file issues (they're yours to own). Never touch production code.
 
@@ -357,6 +359,24 @@ suites_used: {list}
 ```
 
 Tell the user where it was saved. Do not summarize or interpret the feedback — preserve it verbatim for human review.
+
+### Wisdom feedback loop
+
+After saving feedback, ask:
+
+> "Did this run surface any testing anti-pattern or failure pattern that isn't already in the wisdom files? If yes, I'll append it."
+
+If the user says yes (or if you noticed something during the run that isn't covered):
+- New anti-pattern → append to `~/Claude/qa-manager/skills/qa-manager/references/wisdom/anti-patterns.md` under a new `### Lessons from Real Runs` entry
+- New failure pattern → append to `~/Claude/qa-manager/skills/qa-manager/references/wisdom/failure-playbook.md` under `## Lessons from Real Runs`
+
+Format for new entries:
+```markdown
+### {Project name} ({stack}, {date})
+- {What was observed}: {what was wrong} → {what to do instead}
+```
+
+This is how the skill learns across projects. Every run can make the next one better.
 
 ---
 

@@ -95,6 +95,31 @@ Read all discovered files. Internalize:
 Print a brief context summary before proceeding:
 > "Prior QA context: {N files found: list them | none found}. Known fixes: {summary | none}. Known open issues: {summary | none}."
 
+**Step 4 — Establish or confirm QA standard**
+
+After discovery, determine the canonical QA backlog file for this project:
+
+- If `QA-BACKLOG.md` already exists → use it. Standard already set.
+- If a different QA file was found (e.g. `qa-notes.md`, `FINDINGS.md`) → use that file. Adopt it as the standard.
+- If nothing found → `QA-BACKLOG.md` is the standard. You will create it in Phase 7.
+
+Then check whether `CLAUDE.md` already documents the QA standard:
+```bash
+grep -i "qa.*backlog\|backlog.*qa\|qa-agent\|qa_backlog\|QA standard" CLAUDE.md 2>/dev/null
+```
+
+If the standard is **not documented in CLAUDE.md** → append it now:
+```bash
+cat >> CLAUDE.md << 'EOF'
+
+## QA Standard
+QA findings, gaps, and recommendations are tracked in: {QA_FILE}
+All QA agents (local and qa-manager) must append to this file — never overwrite it.
+EOF
+```
+
+This ensures every future agent — local qa-agent, qa-manager, or any other — finds and follows the same standard without discovery.
+
 ### Step B — Cross-run regression check
 
 Check if this project has been audited by qa-manager before:
@@ -433,12 +458,15 @@ python3 ~/Claude/qa-manager/skills/qa-manager/scripts/log_qa_run.py finish \
 
 After the report, write all findings, gaps, and recommendations to a persistent backlog file.
 
-**Locate the project's existing backlog first:**
+**Use the QA standard file established in Phase 0 Step A Step 4.**
+That file is your append target — do not choose a different one.
+
+Also check for any non-QA backlogs to avoid touching:
 ```bash
 ls BACKLOG.md TODO.md TASKS.md docs/backlog* .github/ 2>/dev/null | head -10
 ```
 
-**Then create or append to `QA-BACKLOG.md`** in the project root (never the same file as an existing backlog):
+**Append to `{QA_FILE}`** (the standard file from Phase 0) in the project root — never the same file as any existing non-QA backlog:
 
 ```markdown
 ## [QA-AGENT] Run — {date} {time}

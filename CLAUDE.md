@@ -1,8 +1,8 @@
-# qa-agent — Claude Code Skill
+# qa-manager — Claude Code Skill
 
 ## What this is
 
-`qa-agent` is a Claude Code skill that acts as a reusable QA auditor across any project. When invoked with `/qa-agent` or natural language like "run QA on this project", it scans the codebase, selects relevant test suites, writes tests, runs them, and produces a structured report — without ever modifying production code.
+`qa-manager` is a Claude Code skill that acts as a reusable QA auditor across any project. When invoked with `/qa-manager` or natural language like "run QA on this project", it scans the codebase, selects relevant test suites, writes tests, runs them, and produces a structured report — without ever modifying production code.
 
 It is designed to be a **cross-project QA manager**: drop it into any project, and it knows what to test based on what's in the code.
 
@@ -40,13 +40,13 @@ These are enforced at every phase in SKILL.md — do not remove or weaken them:
 ## Directory map
 
 ```
-~/Claude/qa-agent/
+~/Claude/qa-manager/
 ├── CLAUDE.md                      ← you are here
 ├── install.sh                     ← installer script for sharing
 ├── .claude-plugin/
 │   └── plugin.json                ← Claude Code plugin manifest
 └── skills/
-    └── qa-agent/
+    └── qa-manager/
         ├── SKILL.md               ← the skill prompt: workflow, phases, constraints
         ├── references/
         │   ├── suite-index.md     ← detection signals → suite file mapping (read this first)
@@ -67,7 +67,7 @@ These are enforced at every phase in SKILL.md — do not remove or weaken them:
 
 ## How to add a new suite
 
-1. Create `skills/qa-agent/references/suites/{suite-name}.md` with this structure:
+1. Create `skills/qa-manager/references/suites/{suite-name}.md` with this structure:
    ```markdown
    # {Suite Name} Suite
 
@@ -85,7 +85,7 @@ These are enforced at every phase in SKILL.md — do not remove or weaken them:
    - Things teams typically miss in this area
    ```
 
-2. Add a row to `skills/qa-agent/references/suite-index.md`:
+2. Add a row to `skills/qa-manager/references/suite-index.md`:
    ```
    | {detection signal — grep pattern or file/dep name} | `suites/{suite-name}.md` |
    ```
@@ -96,7 +96,7 @@ These are enforced at every phase in SKILL.md — do not remove or weaken them:
 
 ## How to edit an existing suite
 
-Edit the file directly in `skills/qa-agent/references/suites/`. Changes are live immediately — this directory IS the installed skill (no cache sync needed). Rebuild the zip when done.
+Edit the file directly in `skills/qa-manager/references/suites/`. Changes are live immediately — this directory IS the installed skill (no cache sync needed). Rebuild the zip when done.
 
 ---
 
@@ -106,11 +106,11 @@ Edit the file directly in `skills/qa-agent/references/suites/`. Changes are live
 - **No cache sync needed.** The old cache path (`~/.claude/plugins/cache/claude-plugins-official/...`) is no longer the live location.
 - **Always rebuild the zip after any change:**
   ```bash
-  cd /tmp && rm -rf qa-agent-skill && \
-  cp -r ~/Claude/qa-agent/skills/qa-agent qa-agent-skill && \
-  zip -q -r ~/Desktop/qa-agent-skill.zip qa-agent-skill
+  cd /tmp && rm -rf qa-manager-skill && \
+  cp -r ~/Claude/qa-manager/skills/qa-manager qa-manager-skill && \
+  zip -q -r ~/Desktop/qa-manager-skill.zip qa-manager-skill
   ```
-- **Suite count**: currently **53 suites** in `skills/qa-agent/references/suites/`
+- **Suite count**: currently **53 suites** in `skills/qa-manager/references/suites/`
 
 ---
 
@@ -126,13 +126,13 @@ Edit the file directly in `skills/qa-agent/references/suites/`. Changes are live
 
 ## Sharing the skill
 
-Send `~/Desktop/qa-agent-skill.zip` to the recipient. They extract and run `install.sh` inside it. The installer copies files to `~/Claude/qa-agent/` on their machine and registers it in their `installed_plugins.json`.
+Send `~/Desktop/qa-manager-skill.zip` to the recipient. They extract and run `install.sh` inside it. The installer copies files to `~/Claude/qa-manager/` on their machine and registers it in their `installed_plugins.json`.
 
 ---
 
 ## Suite index quick reference
 
-See `skills/qa-agent/references/suite-index.md` for the full detection table.
+See `skills/qa-manager/references/suite-index.md` for the full detection table.
 
 **Always-on suites** (loaded regardless of project type):
 - `core-unit.md` — function contracts and boundary cases

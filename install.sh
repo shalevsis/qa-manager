@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────
 #  QA Agent Skill — Installer
-#  Installs the qa-agent Claude Code skill to ~/Claude/qa-agent
+#  Installs the qa-manager Claude Code skill to ~/Claude/qa-manager
 #  and registers it in installed_plugins.json.
 # ─────────────────────────────────────────────────────────────
 
 set -e
 
-SKILL_NAME="qa-agent"
-PLUGIN_ID="qa-agent@community"
-INSTALL_DIR="$HOME/Claude/qa-agent"
+SKILL_NAME="qa-manager"
+PLUGIN_ID="qa-manager@community"
+INSTALL_DIR="$HOME/Claude/qa-manager"
 INSTALLED_JSON="$HOME/.claude/plugins/installed_plugins.json"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -26,7 +26,7 @@ fi
 echo "  ✓ Skill files copied to $INSTALL_DIR"
 
 # ── 2. Make log script executable ───────────────────────────
-chmod +x "$INSTALL_DIR/skills/qa-agent/scripts/log_qa_run.py" 2>/dev/null || true
+chmod +x "$INSTALL_DIR/skills/qa-manager/scripts/log_qa_run.py" 2>/dev/null || true
 
 # ── 3. Register in installed_plugins.json ───────────────────
 mkdir -p "$HOME/.claude/plugins"
@@ -76,11 +76,11 @@ echo "  ┌───────────────────────
 echo "  │  QA Agent installed successfully!               │"
 echo "  │                                                 │"
 echo "  │  Restart Claude Code, then use it with:         │"
-echo "  │    /qa-agent                                    │"
+echo "  │    /qa-manager                                    │"
 echo "  │    'run QA on this project'                     │"
 echo "  │    'write tests for this file'                  │"
 echo "  │                                                 │"
-echo "  │  Skill lives at: ~/Claude/qa-agent              │"
+echo "  │  Skill lives at: ~/Claude/qa-manager              │"
 echo "  │  Run feedback:   ~/.claude/qa-feedback/         │"
 echo "  │  Run logs:       ~/.claude/qa-runs.jsonl        │"
 echo "  └─────────────────────────────────────────────────┘"

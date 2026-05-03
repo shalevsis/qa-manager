@@ -1,5 +1,5 @@
 ---
-name: qa-agent
+name: qa-manager
 description: >-
   Full QA pipeline — writes tests, runs them, analyzes failures, produces a QA report. Covers
   unit, integration, E2E, UI interactions, speech/TTS, continuous API polling, localStorage
@@ -56,7 +56,7 @@ This commitment is binding for the duration of the run. If at any point you feel
 Before anything else, check if this project has been audited before:
 
 ```bash
-python3 ~/Claude/qa-agent/skills/qa-agent/scripts/log_qa_run.py summary 2>/dev/null | grep "$(pwd)" | tail -1
+python3 ~/Claude/qa-manager/skills/qa-manager/scripts/log_qa_run.py summary 2>/dev/null | grep "$(pwd)" | tail -1
 ```
 
 If a previous run exists, print:
@@ -66,7 +66,7 @@ Note the previous test count. If this run ends with fewer passing tests, flag it
 
 Then note the current time as your **QA start time** and run:
 ```bash
-python3 ~/Claude/qa-agent/skills/qa-agent/scripts/log_qa_run.py start --project "$(pwd)"
+python3 ~/Claude/qa-manager/skills/qa-manager/scripts/log_qa_run.py start --project "$(pwd)"
 ```
 
 ---
@@ -267,7 +267,7 @@ Then immediately below, add the cost block:
 
 Then run the finish logger:
 ```bash
-python3 ~/Claude/qa-agent/skills/qa-agent/scripts/log_qa_run.py finish \
+python3 ~/Claude/qa-manager/skills/qa-manager/scripts/log_qa_run.py finish \
   --project "$(pwd)" \
   --files-tested N \
   --tests-written N \
@@ -294,7 +294,7 @@ ls BACKLOG.md TODO.md TASKS.md docs/backlog* .github/ 2>/dev/null | head -10
 ```markdown
 ## [QA-AGENT] Run — {date} {time}
 
-> Source: qa-agent skill | Project: {pwd} | Suites: {list}
+> Source: qa-manager skill | Project: {pwd} | Suites: {list}
 > Existing backlog detected at: {path} — not modified   ← include if found
 
 ### Findings (bugs discovered)

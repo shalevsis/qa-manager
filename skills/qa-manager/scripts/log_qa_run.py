@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-QA Run Logger — call this at the start and end of every qa-agent session.
+QA Run Logger — call this at the start and end of every qa-manager session.
 
 Usage:
     python3 log_qa_run.py start --project /path/to/project

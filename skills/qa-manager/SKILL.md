@@ -51,9 +51,41 @@ This commitment is binding for the duration of the run. If at any point you feel
 
 ---
 
-## Phase 0: Cross-run regression check
+## Phase 0: Project memory scan + Cross-run regression check
 
-Before anything else, check if this project has been audited before:
+### Step A — Read project memory
+
+Before touching any code, scan for prior QA context left by previous agents:
+
+```bash
+# Claude memory for this project
+PROJECT_SLUG=$(pwd | sed 's|/|-|g' | sed 's|^-||')
+ls ~/.claude/projects/-${PROJECT_SLUG}/memory/ 2>/dev/null
+
+# Project-level CLAUDE.md (often contains QA notes, known issues, recent fixes)
+cat CLAUDE.md 2>/dev/null | head -80
+
+# Any existing QA backlog
+cat QA-BACKLOG.md 2>/dev/null
+```
+
+Read the memory files if they exist:
+```bash
+cat ~/.claude/projects/-${PROJECT_SLUG}/memory/*.md 2>/dev/null
+```
+
+Extract and internalize:
+- **Fixes already made** by a prior QA agent → don't re-report these as new findings
+- **Known issues** that were documented but not yet fixed → note in your report as "previously identified"
+- **Test patterns** that worked or failed in this project → apply to Phase 3
+- **Anti-patterns specific to this codebase** → avoid repeating mistakes the project already learned
+
+Print a brief context summary before proceeding:
+> "Project memory: {found N memory files | no memory found}. Prior QA: {summary of fixes made / issues known | none}."
+
+### Step B — Cross-run regression check
+
+Check if this project has been audited by qa-manager before:
 
 ```bash
 python3 ~/Claude/qa-manager/skills/qa-manager/scripts/log_qa_run.py summary 2>/dev/null | grep "$(pwd)" | tail -1

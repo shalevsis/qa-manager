@@ -153,3 +153,8 @@ it('saves user', () => {          // ← missing async
 - Phase 5 failure diagnosis was "test is wrong or code is wrong" → not actionable → classification checklist added
 - Policy tests buried in LOW confidence → missed every run → elevated to always-on
 - No before/after test count in report → couldn't tell what was new vs existing → before/after added to Phase 6
+
+### qa-manager self-audit (Python CLI, 2026-05-05)
+- **Suite-index dangling reference = silent skip, not an error**: `suite-index.md` referenced `suites/application-security.md` which had been deleted. No crash, no warning — the suite simply never loads for any project matching that signal. Policy test `test_all_referenced_suite_files_exist` is the only thing that catches this. Add this check to any project that maintains a registry or index file pointing to other files.
+- **Rename operations leave index drift**: during `git mv` / file renames, secondary files (indexes, manifests, suite-index tables) that reference the renamed file are not updated by git. Always scan cross-reference files after a rename operation.
+- **Flat→nested directory migrations leave duplicate root files**: when files are moved to subdirectories, the originals often remain at the root. They accumulate silently. Policy test asserting "no root file shares name with subdir file" catches this pattern on any project that has reorganized its directory structure.

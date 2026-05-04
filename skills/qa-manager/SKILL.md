@@ -120,7 +120,30 @@ EOF
 
 This ensures every future agent — local qa-agent, qa-manager, or any other — finds and follows the same standard without discovery.
 
-### Step B — Cross-run regression check
+### Step B — Cross-project wisdom synthesis (automatic, silent)
+
+Scan all known QA-BACKLOGs across projects. Extract new patterns. Update wisdom files without prompting.
+
+```bash
+find ~/Claude -maxdepth 5 -name "QA-BACKLOG.md" \
+  -not -path "*/.git/*" -not -path "*/node_modules/*" \
+  -not -path "$(pwd)/*" 2>/dev/null
+```
+
+For each file found — read it. For each `[QA-AGENT]` finding, note, or lesson:
+1. Is it a reusable pattern (not project-specific data)?
+2. Does it already appear in `references/wisdom/anti-patterns.md` or `references/wisdom/failure-playbook.md`?
+3. If new and reusable → append automatically, no user prompt.
+
+Same for `~/.claude/qa-feedback/` files if any exist:
+```bash
+ls ~/.claude/qa-feedback/*.md 2>/dev/null
+```
+
+This runs silently before every audit. No output to user unless N new patterns were added, in which case: print one line:
+> "Wisdom updated: {N} new pattern(s) synthesized from {M} project(s)."
+
+### Step C — Cross-run regression check
 
 Check if this project has been audited by qa-manager before:
 
@@ -497,52 +520,15 @@ Rules:
 
 ---
 
-## Phase 8: Feedback Collection
+## Phase 8: Wisdom Capture (no user input required)
 
-**This phase is mandatory. A run that ends without collecting feedback is an incomplete run.**
-
-Before prompting the user, do a quick self-audit — answer these internally:
-- Did I modify any production source file? (If yes: disclose it to the user now.)
+Do a quick self-audit internally — do not surface this to the user:
+- Did I modify any production source file? (If yes: disclose it to the user.)
 - Did I delete or overwrite any existing backlog/doc? (If yes: disclose it.)
 - Is QA-BACKLOG.md written and saved?
 
-Then ask the user for structured feedback. Explain that their response will be saved verbatim to disk for human review — it will not be acted on automatically, but will inform future improvements to the skill.
-
-**QA Run Feedback — please answer what's relevant, skip what isn't:**
-
-1. **What worked well?** Which suites, findings, or recommendations were useful?
-2. **What was off or missed?** Wrong suite selected, irrelevant tests, gaps you expected but didn't see?
-3. **Suite quality:** Were the test patterns appropriate for this project type? Would you use this skill on an external/client project?
-4. **How did you use the output?** Did it help build a QA plan? What did you actually act on?
-5. **Skill enhancement ideas:** What suite, test pattern, or behavior would make this skill more useful as a cross-project QA manager?
-6. **Overall rating:** 1–5, and one sentence why.
-
-Once the user responds, save their feedback to:
-```
-~/.claude/qa-feedback/{YYYY-MM-DD}--{project-dirname}.md
-```
-
-Format:
-```markdown
----
-date: {YYYY-MM-DD HH:MM}
-project: {pwd}
-suites_used: {list}
----
-
-{user's verbatim response, unedited}
-```
-
-Tell the user where it was saved. Do not summarize or interpret the feedback — preserve it verbatim for human review.
-
-### Wisdom feedback loop
-
-After saving feedback, ask:
-
-> "Did this run surface any testing anti-pattern or failure pattern that isn't already in the wisdom files? If yes, I'll append it."
-
-If the user says yes (or if you noticed something during the run that isn't covered):
-- New anti-pattern → append to `~/Claude/qa-manager/skills/qa-manager/references/wisdom/anti-patterns.md` under a new `### Lessons from Real Runs` entry
+Then check whether this run surfaced any new anti-pattern or failure pattern not already in the wisdom files. If yes, append it automatically — no user prompt needed:
+- New anti-pattern → append to `~/Claude/qa-manager/skills/qa-manager/references/wisdom/anti-patterns.md` under `### Lessons from Real Runs`
 - New failure pattern → append to `~/Claude/qa-manager/skills/qa-manager/references/wisdom/failure-playbook.md` under `## Lessons from Real Runs`
 
 Format for new entries:
@@ -551,13 +537,13 @@ Format for new entries:
 - {What was observed}: {what was wrong} → {what to do instead}
 ```
 
-This is how the skill learns across projects. Every run can make the next one better.
+If nothing new was discovered, skip this phase entirely — no message to the user.
 
 ---
 
 ## Narrower workflows
 
-> ⛔ **ALL CONSTRAINTS APPLY IN ALL WORKFLOWS.** Narrow workflows skip phases but never skip constraints. Assessment only. No production code edits. Backlog is append-only. Phase 8 feedback is always collected — it is not optional in any workflow.
+> ⛔ **ALL CONSTRAINTS APPLY IN ALL WORKFLOWS.** Narrow workflows skip phases but never skip constraints. Assessment only. No production code edits. Backlog is append-only. Phase 8 wisdom capture still runs — but silently, no user prompting required.
 
 **Only diagnosing a failure:** skip phases 1–3. Read the test and code, run it, diagnose using the Phase 5 classification checklist.
 

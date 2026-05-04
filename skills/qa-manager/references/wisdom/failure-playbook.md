@@ -171,6 +171,14 @@ When you see these: **write a clear backlog entry, mark the test "exposes known 
 
 ## Lessons from Real Runs
 
+### dailytoolsforall.com (Next.js 14 static, 2026-05-04)
+
+- **Plan mode blocks QA-BACKLOG.md write**: if the host session is in plan mode when qa-manager runs, writing `QA-BACKLOG.md` is blocked. Workaround used: write backlog to plan file (the one writable file), then migrate after plan mode exits. Future: detect plan mode in Phase 0 and warn user upfront.
+
+- **Slug parity check regex false positive**: `diff` between registry and renderer slug lists showed 1 mismatch (`base64-encoder`). Root cause: grep pattern `[a-z][a-z-]+` didn't match digits, so `base64-encoder` was excluded from the renderer list. Diff showed it missing from renderer when it actually existed. Always use `[a-z0-9][a-z0-9-]+` for slug extraction across JS/TS files.
+
+- **Binary parser bugs undetectable without test infra**: 7+ bugs in `lib/evtx-parser.ts` (wrong BinXML token constants, wrong TEMPLATE_INSTANCE layout, wrong EVT_VARIANT_TYPE codes, wrong chunk iteration order) persisted through multiple code reviews. All caught only via live file testing. Lesson: on any binary format parser, propose vitest setup + synthetic ArrayBuffer tests as the first recommendation, before any other gap or finding.
+
 ### Luni (React/Vite/Vitest, 2026-04-02)
 - Statistical tests used `toBeCloseTo(50, 1)` on weighted random → flaky → switched to `toBeGreaterThan(30) + toBeLessThan(70)`
 - Stale snapshot `9→8` word count assertion failed after content change → snapshot was correct, test data was stale → updated test fixture

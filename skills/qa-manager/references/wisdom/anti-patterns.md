@@ -137,6 +137,16 @@ it('saves user', () => {          // ← missing async
 
 ## Lessons from Real Runs
 
+### dailytoolsforall.com (Next.js 14 static, 2026-05-04)
+
+- **Parity grep missing digits**: pattern `[a-z][a-z-]+` silently skips slugs like `base64-encoder` (contains digit). Parity checks for slug matching must use `[a-z0-9][a-z0-9-]+` or equivalent. Found during R-4 registry/renderer parity check — reported false FAIL that wasn't real.
+
+- **Orphan component files after tool removal**: when tools are removed from registry + ToolRenderer, source component files in `components/tools/` are often not deleted. They accumulate silently as dead code. On complex projects with many tools, scan for component files with no corresponding registry entry and flag them as a dedicated check. Found: `EmailHeaderAnalyzer.tsx`, `JsonTreeViewer.tsx`, `InvoiceGenerator.tsx`, `LoremIpsumGenerator.tsx` — all unreachable.
+
+- **AI discovery file drift (llms.txt, sitemap, etc.)**: manually maintained discovery/index files go stale when new tools are added only to the source registry. `llms.txt` claimed 27 tools but listed 26 — `windows-event-viewer` was added to registry but never to the discovery file. Any project with a manually maintained tool list needs an explicit cross-check against the source of truth (registry, DB, etc.) — not just a count check.
+
+- **Zero test coverage on complex binary parsers**: a 731-line DataView binary parser (`lib/evtx-parser.ts`) went to production with 7+ distinct bugs, all caught only by manual inspection and live `.evtx` file testing. No automated tests existed. Binary format parsing (custom protocols, file formats, binary RPC) is the highest-ROI area for unit tests because: (1) bugs are invisible without the right input, (2) fixes regress easily, (3) pure functions are trivially testable with crafted `ArrayBuffer`s. Always flag missing test infra as CRITICAL gap on parser-heavy projects.
+
 ### Luni (React/Vite/Vitest, 2026-04-02)
 - Suite selected without env check → speech/camera suites loaded with no jsdom mock setup → wasted tests
 - Statistical tests used `toBeCloseTo` with tight precision → flaky on CI → switched to range assertions

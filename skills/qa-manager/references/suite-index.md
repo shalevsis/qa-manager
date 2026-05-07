@@ -60,7 +60,7 @@ Load suite files from `references/suites/`. Load framework from `references/fram
 | Targeting multiple browsers/OSes/devices, responsive breakpoints | `suites/cross-platform-compat.md` |
 | `visibilitychange`, `AppState`, background/foreground lifecycle | `suites/app-resume.md` |
 | Stripe, payment SDK, checkout flow, billing UI | `suites/payment-billing.md` |
-| Auth, user input rendered, API keys, cookie-based sessions | `suites/application-security.md` |
+| Auth, user input rendered, API keys, cookie-based sessions | `suites/appsecur.md` |
 | Any app making network requests | `suites/network-conditions.md` |
 | `fetch`, `axios`, `requests`, any HTTP client | `suites/http-status-codes.md` |
 | SPA/component UI with data fetching, AbortController, cross-origin APIs | `suites/request-lifecycle.md` |
@@ -78,7 +78,7 @@ Load suite files from `references/suites/`. Load framework from `references/fram
 
 ## Selection guidelines
 
-- **Default always-on:** `core-unit.md`, `policy-tests.md`, `accessibility.md` (for any UI), `application-security.md` (for any app with auth or user input), `network-conditions.md` (for any app making requests)
+- **Default always-on:** `core-unit.md`, `policy-tests.md`, `accessibility.md` (for any UI), `appsecur.md` (for any app with auth or user input), `network-conditions.md` (for any app making requests)
 - **Load only what matches** — a project with no camera doesn't need `camera-hardware.md`
 - **When in doubt, include** — a false positive (loading an irrelevant suite) is better than a false negative (missing a coverage area)
 - **Announce your selection** to the user before proceeding

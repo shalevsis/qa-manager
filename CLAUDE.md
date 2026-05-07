@@ -137,5 +137,5 @@ See `skills/qa-manager/references/suite-index.md` for the full detection table.
 **Always-on suites** (loaded regardless of project type):
 - `core-unit.md` — function contracts and boundary cases
 - `accessibility.md` — keyboard nav, ARIA, focus, contrast
-- `application-security.md` — auth, XSS, CSRF, input safety
+- `appsecur.md` — auth, input safety, session management, CSRF, IDOR, security headers
 - `network-conditions.md` — offline, slow network, retry behavior
